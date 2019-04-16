@@ -1,0 +1,5 @@
+* text=lf
+*.xml -lf
+.gitignore -lf
+.gitattributes -lf
+*.js -lf
