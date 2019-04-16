@@ -14,7 +14,8 @@
   "author": "Soham Roy",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "express": "^4.16.4",
-    "request": "^2.88.0"
+    "got": "^9.6.0"
   }
 }
