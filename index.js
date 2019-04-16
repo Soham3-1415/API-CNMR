@@ -38,7 +38,7 @@ app.post('/mol2DInput', (req, res) => {
 	Promise.all([molPromise,jcampPromise]).then(result => {
 		res.status(200).send({
 			mol:result[0],
-			jcamp:result[0]===""?"":result[1]
+			jcamp:result[1]
 		});
 	});
 });
