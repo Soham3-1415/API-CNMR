@@ -1,6 +1,7 @@
 const got = require("got");
 const express = require("express");
 const bodyParser = require("body-parser");
+const convertToJcamp = require("convert-to-jcamp");
 const app = express();
 const PORT = parseInt(process.env.PORT,10) || 3000;
 app.use(bodyParser.json());
