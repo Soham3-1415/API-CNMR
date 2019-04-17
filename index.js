@@ -15,7 +15,7 @@ app.post('/mol2DInput', (req, res) => {
 			const inChIKey = res.body.match(/[A-Z]{14}-[A-Z]{10}-[A-Z]/g)[0];
 			return got.get(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/${inChIKey}/SDF?record_type=3d`
 			).then(res => {
-				const lines = res.body.match(/[^\r\n]+/g);
+				const lines = res.body.match(/\n/g);
 				let stop = false;
 				const extracted = lines.filter((line,i) => {
 					if(line.match(/^M\s+END$/g)) {
