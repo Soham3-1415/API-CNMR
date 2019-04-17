@@ -6,15 +6,6 @@ const PORT = parseInt(process.env.PORT,10) || 3000;
 app.use(bodyParser.json());
 app.post('/mol2DInput', (req, res) => {
 	let mol = req.body.mol;
-	let newMol = "";/*got.post({
-		url: 'https://www.chemspider.com/InChI.asmx/MolToInChIKey',
-		form: {mol:mol}
-	}, (error, response, body) => {
-		let inChIKey = body.match(/[A-Z]{14}-[A-Z]{10}-[A-Z]/g)[0];
-		got.get(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/${inChIKey}/SDF?record_type=3d`, function(err, res, body) {
-			return body;
-		});
-	});*/
 	let molPromise = got.post('https://www.chemspider.com/InChI.asmx/MolToInChIKey',
 		{
 			headers:{"Content-Type":"application/x-www-form-urlencoded"},
