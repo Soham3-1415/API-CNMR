@@ -11,6 +11,7 @@
     "chemistry",
     "cnmr"
   ],
+  "repository": "github:Soham3-1415/API-CNMR",
   "author": "Soham Roy",
   "license": "MIT",
   "dependencies": {
