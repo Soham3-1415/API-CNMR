@@ -24,6 +24,7 @@ app.post('/mol2DInput', (req, res) => {
 					}
 					return !stop;
 				});
+				return res.body;
 				return extracted.join('\n');
 			}).catch(error => {console.log(error);return error;});
 		}).catch(error =>  {console.log(error);return error;});
