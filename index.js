@@ -44,8 +44,8 @@ app.post('/mol2DInput',(req,res) => {
 		});
 	};
 
-	//SMILES lookup
-	const smilesPromise = got.post('https://www.chemspider.com/InChI.asmx/MolToInChI',{
+	//InChI lookup
+	const inChIPromise = got.post('https://www.chemspider.com/InChI.asmx/MolToInChI',{
 		headers:{'Content-Type':'application/x-www-form-urlencoded'},
 		body:`mol=${molecule2D}`
 	})
@@ -57,38 +57,26 @@ app.post('/mol2DInput',(req,res) => {
 		.catch(error => {
 			//Do not warn client about internal issues
 			console.log('InChI XML Parse Error');
-		})
-		.then(result => {
-			const inChI = result.string._;
-			return got.get(`https://www.chemspider.com/InChI.asmx/InChIToSMILES?inchi=${encodeURIComponent(inChI)}`);
-		})
-		.catch(error => {
-			//Do not warn client about internal issues
-			console.log('InChI to SMILES Resolution Error');
-		})
-		.then(result => parseXML(result.body))
-		.catch(error => {
-			//Do not warn client about internal issues
-			console.log('SMILES XML Parse Error');
 		});
 
-	//Get raw molecule data. Needs to be scraped
-	const molecule3DRawPromise = smilesPromise.then(result => {
-		//Unfortunately no HTTPS access to this endpoint
-		return got.get(`http://pccdb.org/tools/view_mol_from_smiles/${encodeURIComponent(result.string._)}`);
+	//Get SDF
+	const sdfPromise = inChIPromise.then(result => {
+		return got.get(`https://cactus.nci.nih.gov/chemical/structure/${result.string._}/sdf`);
 	})
 		.catch(error => {
 			//Do not warn client about internal issues
-			console.log('3D Mol Page Retrieval Error');
+			console.log('SDF Retrieval Error');
+			return {body:'SDF UNKNOWN'};
 		});
 
 	//Get molecule name
-	const namePromise = smilesPromise.then(result => {
-		return got.get(`https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(result.string._)}/iupac_name`);
+	const namePromise =  inChIPromise.then(result => {
+		return got.get(`https://cactus.nci.nih.gov/chemical/structure/${result.string._}/iupac_name`);
 	})
 		.catch(error => {
 			//Do not warn client about internal issues
 			console.log('Name Retrieval Error');
+			return {body:'NAME UNKNOWN'};
 		});
 
 	//Get JCAMP data
@@ -99,25 +87,19 @@ app.post('/mol2DInput',(req,res) => {
 		.catch(error => {
 			//Do not warn client about internal issues
 			console.log('JCAMP Retrieval Error');
+			return {body:'{"result":{"spectrum13C":"JCAMP UNKNOWN"}}'};
 		});
 
 	//Send data after all Promises resolve
 	Promise.all([
-		molecule3DRawPromise,
+		sdfPromise,
 		namePromise,
 		jcampPromise
 	])
 		.then(result => {
-			//This is bad
-			let extractedMol = result[0].body
-				.match(/\$\("#show_coords_3d_MOL"\)\.text\('smiles:.*'\+'\$\$\$\$'\);/g)[0]
-				.substring('$("#show_coords_3d_MOL").text(\'smiles:'.length+1);
-			extractedMol = extractedMol.substring(0,extractedMol.indexOf('END')+'END'.length)
-				.replace(/\\n/g, '\n')
-				.replace(/^\s+/g, '');
 			sendSolved(
 				res,
-				extractedMol,
+				result[0].body,
 				result[1].body,
 				JSON.parse(result[2].body).result.spectrum13C
 			);
