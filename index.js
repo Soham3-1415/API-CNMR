@@ -101,7 +101,7 @@ app.post('/mol2DInput',(req,res) => {
 				res,
 				result[0].body,
 				result[1].body,
-				JSON.parse(result[2].body).result.spectrum13C
+				annotateJCAMP(JSON.parse(result[2].body).result)
 			);
 		})
 		.catch(error => {
@@ -118,3 +118,78 @@ app.post('/mol2DInput',(req,res) => {
 app.listen(PORT, () => {
 	console.log(`server running on port ${PORT}`)
 });
+
+//Returns false for whitespace or empty strings
+const removeBlank = element => !element.match(/^\s*$/g);
+
+//Returns annotated JCAMP Data given a JSON from nmrdb.org
+const annotateJCAMP = (data) => {
+	//Number of decimal places to move decimal for the raster section (only takes ints)
+	const rasterMultiplier = 2;
+
+	//Section headers
+	let atomList = '##ATOMLIST=\n' + '$$ AN AS\n';
+	let bondList = '##BONDLIST=\n' + '$$ AN1 AN2 BT\n';
+	let rasterList = '##XY_RASTER=\n' + '$$ AN X Y\n';
+	let peakAssignments = '##PEAK ASSIGNMENTS=(XYA)\n';
+	let peakTable = '##PEAK TABLE=(XY..XY)\n';
+
+	//Read molfile and split in to lines
+	const mol = data.molfile.split(/\n/g);
+
+	//Parse counts line in molfile
+	const counts = mol[3].split(/\s+/g).filter(element => removeBlank(element));
+
+	//Record number of atom section and bond section lines
+	const atomCount = parseInt(counts[0]);
+	const bondCount = parseInt(counts[1]);
+
+	//Create Atom section and Raster section
+	for (let i = 0; i < atomCount; i++) {
+		//Parse atom line
+		const atom = mol[4 + i].split(/\s+/g).filter(element => removeBlank(element));
+		//Create atom section
+		atomList += `${i + 1} ${atom[3]}\n`;
+		//Create raster section and increase raster precision before floats are truncated
+		rasterList += `${i + 1} ${(parseFloat(atom[0])*Math.pow(10,rasterMultiplier)).toFixed(0)} ${-1*(parseFloat(atom[1])*Math.pow(10,rasterMultiplier)).toFixed(0)}\n`;
+	}
+
+	//Create bond section
+	for (let i = 0; i < bondCount; i++) {
+		//Parse bond line
+		const bond = mol[4 + atomCount + i].split(/\s+/g).filter(element => removeBlank(element));
+		//Create bond section
+		bondList += `${bond[0]} ${bond[1]} ${bond[2] === '1' ? 'S' : bond[2] === '2' ? 'D' : 'T'}\n`;
+	}
+
+	const peaks = []; //Store peak location and atom
+	const peakCounts = new Map(); //Store peak location (unique only) and frequency
+	let peakCountMax = 1; //Highest peak frequency
+	//Tally peak frequencies and fill peaks
+	data.spectrum13C.annotations.forEach(peak => {
+		const peakPosition = peak.label.position.x; //Store peak position in a variable
+
+		//Tally peak frequencies
+		if (peakCounts.has(peakPosition)) {
+			const peakCount = peakCounts.get(peakPosition) + 1;
+			peakCounts.set(peakPosition, peakCount);
+			if (peakCount > peakCountMax)
+				peakCountMax = peakCount;
+		}
+		else
+			peakCounts.set(peakPosition,1);
+
+		//Fill peaks
+		peaks.push([peakPosition, peak.info.atomIDs[0]]);
+	});
+
+	//Create peak table section and peak assignments section
+	peaks.forEach(peak => {
+		const peakHeight = peakCounts.get(peak[0])/peakCountMax;
+		peakAssignments += `(${peak[0]},${peakHeight.toFixed(2)},<${parseInt(peak[1])+1}>)\n`;
+		peakTable += `${peak[0]},${peakHeight.toFixed(2)}\n`;
+	});
+
+	//Returned combined data to form annotated JCAMP
+	return atomList + bondList + rasterList + peakAssignments + peakTable + data.spectrum13C.jcamp.value;
+};
