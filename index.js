@@ -3,7 +3,7 @@ const got = require('got');
 const express = require('express');
 const bodyParser = require('body-parser');
 const parseXMLString = require('xml2js').parseString;
-const version = 'v1';
+const version = 'v2';
 const endpoint = '/api/' + version;
 
 //Initial var setup
