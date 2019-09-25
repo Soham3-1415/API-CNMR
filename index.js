@@ -3,6 +3,8 @@ const got = require('got');
 const express = require('express');
 const bodyParser = require('body-parser');
 const parseXMLString = require('xml2js').parseString;
+const version = 'v1';
+const endpoint = '/api/' + version;
 
 //Initial var setup
 const PORT = parseInt(process.env.PORT,10) || 3000;
@@ -30,7 +32,7 @@ const sendSolved = (res,molecule3D,moleculeName,jcampData) => {
 };
 
 //Request Handling
-app.post('/mol2DInput',(req,res) => {
+app.post(endpoint + '/mol2DInput',(req,res) => {
 	//Store error messages to be sent back to client
 	const errorMessage = [];
 
