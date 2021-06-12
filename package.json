@@ -15,9 +15,8 @@
   "author": "Soham Roy",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.18.3",
-    "express": "^4.16.4",
-    "got": "^9.6.0",
-    "xml2js": "^0.4.19"
+    "express": "^4.17.1",
+    "got": "^11.8.2",
+    "xml2js": "^0.4.23"
   }
 }

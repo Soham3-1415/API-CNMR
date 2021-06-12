@@ -1,7 +1,6 @@
 //Dependenices
 const got = require('got');
 const express = require('express');
-const bodyParser = require('body-parser');
 const parseXMLString = require('xml2js').parseString;
 const version = 'v2';
 const endpoint = '/api/' + version;
@@ -11,7 +10,7 @@ const PORT = parseInt(process.env.PORT, 10) || 3000;
 const app = express();
 
 //Middleware
-app.use(bodyParser.json());
+app.use(express.json());
 app.use((err, req, res, next) => {
     if (err) {
         console.log('Invalid Request Data');
